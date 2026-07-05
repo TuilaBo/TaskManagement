@@ -338,6 +338,151 @@ java -jar /opt/taskmanagement/app/taskmanagement-0.0.1-SNAPSHOT.jar \
 # Ctrl+A rồi D để thoát
 ```
 
+### 4.9b. Triển khai bằng Docker (Docker Compose)
+
+**Ưu điểm:** Không cần cài Java trên VPS, tự động chạy PostgreSQL cùng app.
+
+#### Bước 1 — Cài Docker trên VPS
+
+```bash
+# Cài Docker
+curl -fsSL https://get.docker.com | sh
+
+# Cài Docker Compose
+apt install docker-compose -y
+
+# Bật và khởi động Docker
+systemctl enable docker
+systemctl start docker
+
+# Kiểm tra
+docker --version
+docker-compose --version
+```
+
+#### Bước 2 — Copy project lên VPS
+
+```bash
+# Từ máy local — push lên GitHub trước
+git add .
+git commit -m "Add Docker support"
+git push origin main
+
+# Trên VPS
+cd /opt
+git clone https://github.com/<your-username>/TaskManagement.git
+cd TaskManagement
+```
+
+#### Bước 3 — Tạo file `.env`
+
+```bash
+cp .env.docker .env
+nano .env
+```
+
+Điền đầy đủ các biến:
+
+```env
+DB_PASSWORD=your_postgres_password
+JWT_SECRET=your_jwt_secret_64_chars_random
+MAIL_USERNAME=your_email@gmail.com
+MAIL_PASSWORD=your_gmail_app_password
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CORS_ORIGINS=*
+```
+
+> ⚠️ **Bắt buộc phải điền đầy đủ các biến** — app sẽ không chạy nếu thiếu `DB_PASSWORD`, `JWT_SECRET`, `CLOUDINARY_API_SECRET`.
+
+#### Bước 4 — Chạy Docker Compose
+
+```bash
+# Build và chạy (lần đầu)
+docker-compose up -d --build
+
+# Xem trạng thái
+docker-compose ps
+
+# Xem log
+docker-compose logs -f app
+```
+
+#### Bước 5 — Mở port (nếu dùng firewall)
+
+```bash
+ufw allow 8080/tcp
+```
+
+#### Bước 6 — Test
+
+```bash
+curl http://localhost:8080/api/tasks
+```
+
+App chạy tại `http://160.22.107.121:8080`
+
+---
+
+### Cập nhật code mới khi dùng Docker
+
+```bash
+# 1. Pull code mới
+cd /opt/TaskManagement
+git pull origin main
+
+# 2. Rebuild và chạy lại
+docker-compose up -d --build
+
+# 3. Xem log để kiểm tra
+docker-compose logs -f app
+```
+
+---
+
+### Các lệnh Docker thường dùng
+
+```bash
+# Dừng app
+docker-compose down
+
+# Xem log real-time
+docker-compose logs -f
+
+# Restart
+docker-compose restart app
+
+# Rebuild không dùng cache
+docker-compose build --no-cache
+docker-compose up -d
+
+# Xóa hoàn toàn (bao gồm database)
+docker-compose down -v
+
+# Kiểm tra health
+docker-compose ps
+
+# Vào container để debug
+docker exec -it taskmanagement-app sh
+docker exec -it taskmanagement-db psql -U postgres -d task_management
+```
+
+---
+
+### So sánh: Chạy trực tiếp vs Docker
+
+| Tiêu chí | Chạy trực tiếp (JAR) | Docker Compose |
+|-----------|----------------------|----------------|
+| Cần cài Java | Có | Không |
+| Cần cài PostgreSQL riêng | Có | Không (tự tạo) |
+| Port mặc định | 8080 | 8080 |
+| Khởi động lại | systemctl | docker restart |
+| Log | journalctl | docker-compose logs |
+| Rebuild | mvn + scp | docker-compose build |
+
+---
+
 ### 4.10. Cấu hình Firewall
 
 ```bash
@@ -502,10 +647,10 @@ Content-Type: application/json
 
 Request:
 {
-  "username": "staff01",
-  "password": "123456",
+  "username": "staff01",       // 6–50 ký tự
+  "password": "Pass1234",      // Tối thiểu 8 ký tự, gồm chữ và số
   "email": "staff01@email.com",
-  "fullName": "Nguyễn Văn A"
+  "fullName": "Nguyễn Văn A"  // 10–100 ký tự
 }
 
 Response (201):
@@ -904,7 +1049,7 @@ Content-Type: application/json
 Request:
 {
   "currentPassword": "oldpassword",
-  "newPassword": "newpassword"
+  "newPassword": "NewPass123"  // Tối thiểu 8 ký tự, gồm chữ và số
 }
 
 Response (200):

@@ -1,7 +1,11 @@
 HELP.md
 target/
 application-local.properties
+application-prod.properties
 src/main/resources/application-local.properties
+.env
+.env.docker
+!.env.docker
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

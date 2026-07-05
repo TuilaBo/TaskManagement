@@ -1,5 +1,6 @@
 package com.example.TaskManagement.dto.request;
 
+import com.example.TaskManagement.validator.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -11,14 +12,15 @@ import lombok.Setter;
 public class RegisterRequest {
 
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = 6, max = 50, message = "Username must be between 6 and 50 characters")
     private String username;
 
-    @Size(max = 100, message = "Full name must not exceed 100 characters")
+    @NotBlank(message = "Full name is required")
+    @Size(min = 10, max = 100, message = "Full name must be between 10 and 100 characters")
     private String fullName;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @StrongPassword
     private String password;
 
     @NotBlank(message = "Email is required")
