@@ -57,13 +57,14 @@ public class TaskServiceImpl implements TaskService {
     public PageResponse<TaskResponse> getAllTasks(
             TaskStatus status,
             String keyword,
+            Long assignedToId,
             int page,
             int size,
             String sortBy,
             String sortDir) {
         User currentUser = getCurrentUser();
         Pageable pageable = buildPageable(page, size, sortBy, sortDir);
-        Page<Task> taskPage = findTasks(currentUser, status, keyword, pageable);
+        Page<Task> taskPage = findTasks(currentUser, status, keyword, assignedToId, pageable);
         Page<TaskResponse> responsePage = taskPage.map(this::mapToResponse);
         return PageResponse.from(responsePage);
     }
@@ -288,12 +289,29 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.save(task);
     }
 
-    private Page<Task> findTasks(User currentUser, TaskStatus status, String keyword, Pageable pageable) {
+    private Page<Task> findTasks(User currentUser, TaskStatus status, String keyword, Long assignedToId, Pageable pageable) {
         boolean isManager = currentUser.getRole() == Role.MANAGER;
         boolean hasKeyword = keyword != null && !keyword.isBlank();
         boolean hasStatus = status != null;
+        boolean hasAssignedTo = assignedToId != null;
+
+        if (!isManager && hasAssignedTo && !assignedToId.equals(currentUser.getId())) {
+            throw new ForbiddenException("Staff can only view their own tasks");
+        }
 
         if (isManager) {
+            if (hasKeyword && hasStatus && hasAssignedTo) {
+                return taskRepository.searchByKeywordStatusAndAssignedTo(keyword.trim(), status, assignedToId, pageable);
+            }
+            if (hasKeyword && hasAssignedTo) {
+                return taskRepository.searchByKeywordAndAssignedTo(keyword.trim(), assignedToId, pageable);
+            }
+            if (hasStatus && hasAssignedTo) {
+                return taskRepository.findByAssignedToIdAndStatus(assignedToId, status, pageable);
+            }
+            if (hasAssignedTo) {
+                return taskRepository.findByAssignedToId(assignedToId, pageable);
+            }
             if (hasKeyword && hasStatus) {
                 return taskRepository.searchByKeywordAndStatus(keyword.trim(), status, pageable);
             }

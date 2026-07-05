@@ -39,16 +39,17 @@ public class TaskController {
 
     @GetMapping
     @Operation(summary = "Danh sách task (phân trang)",
-            description = "Lọc theo status/keyword. Manager thấy tất cả, Staff chỉ thấy task của mình.")
+            description = "Lọc theo status/keyword/assignedToId. Manager thấy tất cả, Staff chỉ thấy task của mình.")
     public ResponseEntity<ApiResponse<PageResponse<TaskResponse>>> getAllTasks(
             @Parameter(description = "PENDING hoặc COMPLETED") @RequestParam(required = false) TaskStatus status,
             @Parameter(description = "Tìm trong title và description") @RequestParam(required = false) String keyword,
+            @Parameter(description = "ID nhân viên được giao (chỉ Manager dùng được)") @RequestParam(required = false) Long assignedToId,
             @Parameter(description = "Trang (bắt đầu từ 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Số bản ghi mỗi trang (max 100)") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sắp xếp theo: createdAt, updatedAt, deadline, title, startDate")
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "asc hoặc desc") @RequestParam(defaultValue = "desc") String sortDir) {
-        PageResponse<TaskResponse> tasks = taskService.getAllTasks(status, keyword, page, size, sortBy, sortDir);
+        PageResponse<TaskResponse> tasks = taskService.getAllTasks(status, keyword, assignedToId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResponse.success("Tasks retrieved successfully", tasks));
     }
 

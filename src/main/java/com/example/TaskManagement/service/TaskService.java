@@ -12,6 +12,7 @@ public interface TaskService {
     PageResponse<TaskResponse> getAllTasks(
             TaskStatus status,
             String keyword,
+            Long assignedToId,
             int page,
             int size,
             String sortBy,

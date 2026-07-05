@@ -111,7 +111,7 @@ class TaskServiceImplTest {
         Page<Task> page = new PageImpl<>(List.of(task));
         when(taskRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-        PageResponse<TaskResponse> result = taskService.getAllTasks(null, null, 0, 10, "createdAt", "desc");
+        PageResponse<TaskResponse> result = taskService.getAllTasks(null, null, null, 0, 10, "createdAt", "desc");
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("Test task");
@@ -127,7 +127,7 @@ class TaskServiceImplTest {
         Page<Task> page = new PageImpl<>(List.of(task));
         when(taskRepository.findByAssignedToId(eq(2L), any(Pageable.class))).thenReturn(page);
 
-        PageResponse<TaskResponse> result = taskService.getAllTasks(null, null, 0, 10, "createdAt", "desc");
+        PageResponse<TaskResponse> result = taskService.getAllTasks(null, null, null, 0, 10, "createdAt", "desc");
 
         assertThat(result.getContent()).hasSize(1);
         verify(taskRepository).findByAssignedToId(eq(2L), any(Pageable.class));
@@ -140,7 +140,7 @@ class TaskServiceImplTest {
         Page<Task> page = new PageImpl<>(List.of(task));
         when(taskRepository.findByStatus(eq(TaskStatus.PENDING), any(Pageable.class))).thenReturn(page);
 
-        taskService.getAllTasks(TaskStatus.PENDING, null, 0, 10, "createdAt", "desc");
+        taskService.getAllTasks(TaskStatus.PENDING, null, null, 0, 10, "createdAt", "desc");
 
         verify(taskRepository).findByStatus(eq(TaskStatus.PENDING), any(Pageable.class));
     }
@@ -152,7 +152,7 @@ class TaskServiceImplTest {
         when(taskRepository.searchByKeywordAndAssignedTo(eq("report"), eq(2L), any(Pageable.class)))
                 .thenReturn(page);
 
-        taskService.getAllTasks(null, "report", 0, 10, "createdAt", "desc");
+        taskService.getAllTasks(null, "report", null, 0, 10, "createdAt", "desc");
 
         verify(taskRepository).searchByKeywordAndAssignedTo(eq("report"), eq(2L), any(Pageable.class));
     }
