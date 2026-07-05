@@ -217,6 +217,11 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(Long id) {
         Task task = findTaskById(id);
         validateTaskAccess(task);
+
+        if (task.getStatus() == TaskStatus.COMPLETED) {
+            throw new BadRequestException("Cannot delete a completed task. Completed tasks are preserved for records.");
+        }
+
         taskRepository.delete(task);
     }
 

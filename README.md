@@ -179,15 +179,18 @@ sudo chown -R $(whoami):$(whoami) /opt/taskmanagement
 ### 4.4. Upload JAR lên VPS
 
 ```bash
-# Từ máy local — build JAR trước
+# Cách 1: Từ máy local — build JAR rồi upload (scp)
 mvn clean package -DskipTests
-
-# Upload lên VPS (scp)
 scp target/taskmanagement-0.0.1-SNAPSHOT.jar root@YOUR_VPS_IP:/opt/taskmanagement/app/
 
-# Hoặc dùng Git trên VPS
-git clone https://github.com/<your-username>/TaskManagement.git
-cd TaskManagement
+# Cách 2: Dùng Git trên VPS (khuyên dùng — luôn có code mới nhất)
+git clone https://github.com/<your-username>/TaskManagement.git /opt/taskmanagement/app
+cd /opt/taskmanagement/app
+mvn clean package -DskipTests
+
+# Cách 3: Trên VPS — pull code mới nhất (sau khi đã clone lần đầu)
+cd /opt/taskmanagement/app
+git pull origin main
 mvn clean package -DskipTests
 cp target/taskmanagement-0.0.1-SNAPSHOT.jar /opt/taskmanagement/app/
 ```
@@ -292,7 +295,50 @@ sudo systemctl status taskmanagement
 journalctl -u taskmanagement -f
 ```
 
-### 4.7. Cấu hình Firewall
+### 4.9. Cập nhật code mới (Sau khi push lên GitHub)
+
+#### Dùng systemd
+
+```bash
+# 1. Dừng ứng dụng
+sudo systemctl stop taskmanagement
+
+# 2. Pull code mới nhất từ GitHub
+cd /opt/taskmanagement/app
+git pull origin main
+
+# 3. Rebuild
+mvn clean package -DskipTests
+
+# 4. Copy JAR mới
+cp target/taskmanagement-0.0.1-SNAPSHOT.jar /opt/taskmanagement/app/
+
+# 5. Khởi động lại
+sudo systemctl start taskmanagement
+sudo systemctl status taskmanagement
+```
+
+#### Dùng screen
+
+```bash
+# 1. Thoát khỏi screen (Ctrl+A rồi D)
+# 2. Dừng process
+pkill -f taskmanagement
+
+# 3. Pull & rebuild
+cd /opt/taskmanagement/app
+git pull origin main
+mvn clean package -DskipTests
+cp target/taskmanagement-0.0.1-SNAPSHOT.jar /opt/taskmanagement/app/
+
+# 4. Chạy lại
+screen -S taskapp
+java -jar /opt/taskmanagement/app/taskmanagement-0.0.1-SNAPSHOT.jar \
+  --spring.config.additional-location=file:/opt/taskmanagement/config/application-prod.properties
+# Ctrl+A rồi D để thoát
+```
+
+### 4.10. Cấu hình Firewall
 
 ```bash
 sudo ufw allow 22    # SSH
@@ -670,6 +716,13 @@ Response (200):
 {
   "message": "Task deleted successfully",
   "status": 200,
+  "data": null
+}
+
+Error (400) — task đã hoàn thành:
+{
+  "message": "Cannot delete a completed task. Completed tasks are preserved for records.",
+  "status": 400,
   "data": null
 }
 ```
